@@ -1,11 +1,11 @@
 /**
  *
- * line-graph.js
+ * graph.js
  *
  */
 
 
- class Graph {
+class Graph {
 
   /* コンストラクタ */
   constructor(svgId, data,
@@ -148,15 +148,22 @@
   }
 
   /* y 方向のスケールを設定する */
-  setYScale() {
+  setYScale(marginRatio=0.2) {
 
-    // y 方向の最大値を取得する ( y 方向のスケールに影響する )
+    // y 方向の最小値、最大値を取得する ( y 方向のスケールに影響する )
     let ys = this.data.map(this.getY);
+    let yMin = Math.min(...ys);
     let yMax = Math.max(...ys);
+
+    // 余裕を持たせたいので最大値、最小値を校正する
+    // ( 最大値 - 最小値 ) x marginRatio を
+    // 最大値に加算、最小値に減算する 
+    let yRange = yMax - yMin;
+    let yMargin = yRange * marginRatio;
 
     // y 方向のスケールを作成する
     let y = d3.scaleLinear()
-      .domain([0, yMax])
+      .domain([yMin - yMargin, yMax + yMargin])
       .range([
         this.height - this.margin.bottom,
         this.margin.top
@@ -194,7 +201,7 @@
 
   /* y 軸の目盛りのフォーマット用関数 */
   setYTickFormat(d, i) {
-    return i;
+    return d;
   }
 
   /* y 軸を作成する */
@@ -265,49 +272,3 @@
   }
 
 }
-
-
-class LineGraph extends Graph {
-
-  /* コンストラクタ */
-  constructor(svgId, data,
-    margin={top: 20, right: 20, bottom: 20, left: 32}) {
-    super(svgId, data, margin);
-
-    // ※とりあえず動くところを
-    let valueLineFunc = d3.line()
-      .x(d => this.x(d.at))
-      .y(d => this.y(d.value));
-    let valueLine = this.svg.append("path")
-      .data([this.data])
-      .attr("class", "path-aaa")
-      .attr("d", valueLineFunc)
-      .attr("fill", "none")
-      .attr("stroke", "steelblue")
-      .attr("stroke-width", "1.5px");
-
-  }
-
-}
-
-/* main */
-let svgId = "graphArea";
-let dataType = "date";
-let data;
-if (dataType === "date") {
-  data = [
-    {value: 10, at: new Date("2018-06-26 04:45:45")},
-    {value: 13, at: new Date("2018-06-26 07:30:24")},
-    {value: 11, at: new Date("2018-06-26 12:30:37")},
-    {value: 25, at: new Date("2018-06-26 15:25:13")},
-  ];
-} else if (dataType === "numeric") {
-  data = [
-    {value: 10, at: 1},
-    {value: 13, at: 5},
-    {value: 11, at: 7},
-    {value: 25, at: 13},
-  ];
-}
-let lg = new LineGraph(svgId, data);
-console.dir(lg);
